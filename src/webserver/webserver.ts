@@ -18,24 +18,20 @@ export class WebServer {
     }
 
     setup() {
-        this.app.use(express.static("www"));
         this.app.get("/", (req, res) => {
             res.send("KlientKonnect is running!");
         });
-
-        /* ENDPOINTS NEEDED:
-            - /api/sharer GET DONE
-            - /api/messages GET Headers: { I: serverid, s: bool skip } DONE
-            - /api/resolution GET DONE
-            - /api/mode GET DONE
-            - /api/screen/register POST Headers: { I: serverid } DONE
-            - /api/screen/unregister POST Headers: { I: serverid } DONE
-        */
         this.app.get("/api/sharer", (req, res) => {
-            if(Client.currSharer == null) {
-                res.send(JSON.stringify({ name: null, id: null }));
-            } else {
+            let sent = false;
+            function l() {
+                sent = true;
                 res.send(JSON.stringify({ name: Client.currSharer.name, id: Client.currSharer.socketid }));
+            }
+            if(Client.currSharer == null) {
+                Emitter.once("sharer", l);
+                return;
+            } else {
+                l();
             }
         });
         this.app.get("/api/resolution", (req, res) => {
@@ -45,38 +41,66 @@ export class WebServer {
             res.send(JSON.stringify({ mode: Configuration.mode }));
         });
         this.app.get("/api/screen/register", (req, res) => {
-            if(req.headers["i"] == undefined) { res.send("ERR:Missing headers."); return; }
-            Screen.screens.push(new Screen(req.headers["i"] as string));
+            if(req.headers["i"] == undefined || req.headers["p"] == undefined) { res.status(400); res.end(); return; }
+            if(req.headers["p"] !== Configuration.password) {
+                res.status(401);
+                res.end();
+                return;
+            }
+            if(Screen.getScreenByJobid(req.headers["i"] as string) == null) {
+                Screen.screens.push(new Screen(req.headers["i"] as string));
+            }
+            Logger.log("WebServer", "Screen registered");
+            res.send("");
         });
         this.app.get("/api/screen/unregister", (req, res) => {
-            if(req.headers["i"] == undefined) { res.send("ERR:Missing headers."); return; }
+            if(req.headers["i"] == undefined) {
+                res.status(400); res.end();
+                return;
+            }
+            if(Screen.getScreenByJobid(req.headers["i"] as string) == null) {
+                res.status(403); res.end();
+                return;
+            }
+            Logger.log("WebServer", "Screen unregistered");
             Screen.screens = Screen.screens.filter((screen) => { return screen.jobid != req.headers["i"]; });
+            res.send("");
         });
         this.app.get("/api/messages", (req, res) => {
             if(req.headers["i"] == undefined || req.headers["s"] == undefined) {
-                res.send("ERR:Missing headers.");
+                res.status(400); res.end();
+                return;
             }
-            let dataSent = false;
-            function l() {
-                dataSent = true;
-                let screen = Screen.getScreenByJobid(req.headers["i"] as string)
-    
-                res.setHeader("Content-Type", "application/octet-stream");
-    
-                if(req.headers["s"] == "1") {
-                    Client.currSharer.requestFullImage().then((value) => {
-                        res.send(value);
-                    });
-                    screen.position = ws.messages.length;
-                    return;
-                }
+            if(Screen.getScreenByJobid(req.headers["i"] as string) == null) {
+                res.status(403); res.end();
+                return;
+            }
+            
+            if(Client.currSharer == null) {
+                res.setHeader("sharing", "{\"name\": null, \"id\": null}");
+                res.send("");
+                return;
+            } else
+                res.setHeader("sharing", JSON.stringify({ name: Client.currSharer.name, id: Client.currSharer.socketid }));
+            
+            let screen = Screen.getScreenByJobid(req.headers["i"] as string)
+
+            res.setHeader("Content-Type", "application/octet-stream");
+
+            if(req.headers["s"] === "1") {
+                Client.currSharer.requestFullImage().then((value) => {
+                    res.send(value);
+                });
+                screen.position = ws.messages.length;
+                return;
+            } else {
                 let buffers = [];
-    
+
                 ws.messages.slice(screen.position,screen.position+Configuration.maxMessageSend).forEach((message) => {
                     buffers.push(message);
                     screen.position++;
                 });
-
+    
                 res.send(Buffer.concat(buffers));
     
                 let cut = Screen.getLowestPosition();
@@ -85,16 +109,6 @@ export class WebServer {
                 });
                 ws.messages.splice(0, cut);
             }
-            if(ws.messages.length > 0) return l();
-
-            Emitter.once("data", l);
-            setTimeout(() => {
-                if(dataSent) return;
-
-                Emitter.removeListener("data", l);
-
-                return res.send("");
-            }, Configuration.longPollTimeout*1000);
         });
         Logger.log("WebServer", "Started webserver");
     }

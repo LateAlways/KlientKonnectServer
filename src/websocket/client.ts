@@ -41,6 +41,7 @@ export class Client {
 
         if(Client.currSharer == this) {
             Client.currSharer = null;
+            Logger.log("ClientConnect", this.name+" ("+this.socketid.toString()+") stopped sharing their screen. (DISCONNECT)");
         }
     }
 
@@ -65,6 +66,7 @@ export class Client {
             Client.currSharer = this;
             this.send("connectsuccess");
             Logger.log("ClientConnect", this.name+" ("+this.socketid.toString()+") is now sharing their screen.");
+            webserver.Emitter.emit("sharer");
             return;
         } else if(message.toString().startsWith("connect:")) {
             this.send("connectfailure:already");
@@ -86,6 +88,7 @@ export class Client {
             return;
         }
         if(message.toString().startsWith("reqfullimage") && Client.currSharer == this) {
+            if(this.waitingForImage == null) return;
             this.waitingForImage(Buffer.from(message.toString().substring(12)));
             this.waitingForImage = null;
             return;

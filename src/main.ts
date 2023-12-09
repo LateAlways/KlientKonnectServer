@@ -10,9 +10,13 @@ const server: http.Server | https.Server = Configuration.ssl ? https.createServe
 
 import { WebSocketServer } from "./websocket/ws";
 import { Logger } from "./logger";
+import { WebServer } from "./webserver/webserver";
 
 const wss: WebSocketServer = new WebSocketServer(server);
 wss.start();
+
+const webserver: WebServer = new WebServer(app);
+webserver.setup();
 
 server.listen(Configuration.port, () => {
     Logger.log("Main", `Server started on port ${Configuration.port}`);
