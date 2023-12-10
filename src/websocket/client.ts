@@ -14,7 +14,7 @@ export class Client {
     subscribed: boolean;
     static clients: Client[] = [];
     static currSharer: Client | null = null;
-    waitingForImage: (value: Buffer) => void;
+    waitingForImage: ((value: Buffer) => void)[] = [];
 
     constructor(socket: ws.Socket, socketid: number) {
         this.socket = socket;
@@ -32,7 +32,7 @@ export class Client {
         Logger.log("ClientRequest", "Requested full image from "+this.name+" ("+this.socketid.toString()+")");
 
         return await new Promise<Buffer>((resolve) => {
-            this.waitingForImage = resolve;
+            this.waitingForImage.push(resolve);
         });
     }
 
@@ -88,9 +88,9 @@ export class Client {
             return;
         }
         if(message.toString().startsWith("reqfullimage") && Client.currSharer == this) {
-            if(this.waitingForImage == null) return;
-            this.waitingForImage(Buffer.from(message).subarray(12));
-            this.waitingForImage = null;
+            this.waitingForImage.forEach((resolve) => {
+                resolve(Buffer.from(message.toString().split(":")[1]));
+            });
             return;
         }
         Client.clients.forEach((client) => {

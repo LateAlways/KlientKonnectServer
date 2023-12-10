@@ -98,7 +98,7 @@ export class WebServer {
 
             if(req.headers["s"] === "1") {
                 Client.currSharer.requestFullImage().then((value) => {
-                    res.send(value);
+                    res.send(Buffer.from(value));
                 });
                 screen.position = ws.messages.length;
                 return;
