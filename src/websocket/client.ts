@@ -89,7 +89,7 @@ export class Client {
         }
         if(message.toString().startsWith("reqfullimage") && Client.currSharer == this) {
             if(this.waitingForImage == null) return;
-            this.waitingForImage(Buffer.from(message.toString().substring(12)));
+            this.waitingForImage(Buffer.from(message).subarray(12));
             this.waitingForImage = null;
             return;
         }
