@@ -34,6 +34,15 @@ export class WebServer {
                 l();
             }
         });
+        this.app.get("/api/connect", (req, res) => {
+            if(req.headers["p"] == undefined) { res.status(400); res.end(); return; }
+            if(req.headers["p"] !== Configuration.password) {
+                res.status(401);
+                res.end();
+            } else {
+                res.send("");
+            }
+        });
         this.app.get("/api/resolution", (req, res) => {
             res.send(JSON.stringify({ width: Configuration.resolution.x, height: Configuration.resolution.y }));
         });
