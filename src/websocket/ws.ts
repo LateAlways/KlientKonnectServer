@@ -12,9 +12,6 @@ export class WebSocketServer {
     constructor(server: uws.TemplatedApp) {
         this.wsserver = server
         this.wsserver.ws("/*", {
-            compression: uws.SHARED_COMPRESSOR,
-            maxPayloadLength: 16 * 1024 * 1024,
-            idleTimeout: 10,
             open: (ws: uws.WebSocket<unknown>) => {
                 this.onConnection(ws);
             },
