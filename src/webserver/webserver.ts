@@ -108,7 +108,7 @@ export class WebServer {
                 let buffers = [];
 
                 ws.messages.slice(screen.position,screen.position+Configuration.maxMessageSend).forEach((message) => {
-                    buffers.push(Buffer.from(new Uint8Array(message)));
+                    buffers.push(message);
                     screen.position++;
                 });
     
