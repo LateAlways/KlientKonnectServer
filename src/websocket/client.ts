@@ -96,7 +96,7 @@ export class Client {
                 client.send(message);
             }
         });
-        messages.push(message as Buffer);
+        messages.push(message);
         webserver.Emitter.emit("data");
     }
 
