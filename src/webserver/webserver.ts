@@ -100,7 +100,7 @@ export class WebServer {
             if(req.getHeader("s") === "1") {
                 
                 Client.currSharer.requestFullImage().then((value) => {
-                    res.write(Buffer.from(value));
+                    res.write(Buffer.from(value).toString());
                     screen.position = ws.messages.length;
                     res.end();
                 });
@@ -112,7 +112,7 @@ export class WebServer {
                     screen.position++;
                 });
     
-                res.write(Buffer.concat(buffers));
+                res.write(Buffer.concat(buffers).toString());
     
                 let cut = Screen.getLowestPosition();
                 Screen.screens.forEach((screen) => {
