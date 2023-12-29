@@ -98,12 +98,13 @@ export class WebServer {
             res.writeHeader("Content-Type", "application/octet-stream");
 
             if(req.getHeader("s") === "1") {
+                
                 Client.currSharer.requestFullImage().then((value) => {
                     res.write(Buffer.from(value));
+                }).then(() => {
+                    res.end();
+                    screen.position = ws.messages.length;
                 });
-                screen.position = ws.messages.length;
-                res.end();
-                return;
             } else {
                 let buffers = [];
 
