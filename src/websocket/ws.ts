@@ -4,7 +4,7 @@ import * as https from "https";
 import { Logger } from "../logger";
 import { Client } from "./client";
 
-export let messages: Buffer[] = [];
+export let messages: string[] = [];
 
 export class WebSocketServer {
     wsserver: uws.TemplatedApp;

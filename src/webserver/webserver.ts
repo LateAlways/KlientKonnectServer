@@ -76,7 +76,7 @@ export class WebServer {
             Screen.screens = Screen.screens.filter((screen) => { return screen.jobid != req.getHeader("i"); });
             res.end();
         });
-        this.app.get("/api/messages", async (res, req) => {
+        this.app.get("/api/messages", (res, req) => {
             if(req.getHeader("i") == "" || req.getHeader("s") == "") {
                 res.writeStatus("400"); res.write(""); res.end();
                 return;
@@ -98,26 +98,29 @@ export class WebServer {
             res.writeHeader("Content-Type", "application/octet-stream");
 
             if(req.getHeader("s") === "1") {
-                let fullimage = await Client.currSharer.requestFullImage()
-                res.write(Buffer.from(fullimage).toString());
-                screen.position = ws.messages.length;
-                res.end();
+                res.onAborted(() => {});
+                Client.currSharer.requestFullImage().then(image => {
+                    res.write(image);
+                    screen.position = ws.messages.length;
+                    res.end();
+                });
             } else {
+                console.log("k")
                 let buffers = [];
 
                 ws.messages.slice(screen.position,screen.position+Configuration.maxMessageSend).forEach((message) => {
                     buffers.push(Buffer.from(message));
                     screen.position++;
                 });
-    
-                res.write(Buffer.concat(buffers).toString());
+
+                console.log(ws.messages.length, screen.position)
     
                 let cut = Screen.getLowestPosition();
                 Screen.screens.forEach((screen) => {
                     screen.position -= cut;
                 });
                 ws.messages.splice(0, cut);
-                res.end();
+                res.end(Buffer.concat(buffers).toString());
             }
         });
         Logger.log("WebServer", "Started webserver");
