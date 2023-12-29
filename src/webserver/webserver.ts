@@ -78,17 +78,17 @@ export class WebServer {
         });
         this.app.get("/api/messages", (res, req) => {
             if(req.getHeader("i") == "" || req.getHeader("s") == "") {
-                res.writeStatus("400"); res.endWithoutBody();
+                res.writeStatus("400"); res.write(""); res.end();
                 return;
             }
             if(Screen.getScreenByJobid(req.getHeader("i") as string) == null) {
-                res.writeStatus("403"); res.endWithoutBody();
+                res.writeStatus("403"); res.write(""); res.end();
                 return;
             }
             
             if(Client.currSharer == null) {
                 res.writeHeader("sharing", "{\"name\": null, \"id\": null}");
-                res.endWithoutBody();
+                res.write(""); res.end();
                 return;
             } else
                 res.writeHeader("sharing", JSON.stringify({ name: Client.currSharer.name, id: Client.currSharer.socketid }));
@@ -101,9 +101,8 @@ export class WebServer {
                 
                 Client.currSharer.requestFullImage().then((value) => {
                     res.write(Buffer.from(value));
-                }).then(() => {
-                    res.end();
                     screen.position = ws.messages.length;
+                    res.end();
                 });
             } else {
                 let buffers = [];
@@ -120,6 +119,7 @@ export class WebServer {
                     screen.position -= cut;
                 });
                 ws.messages.splice(0, cut);
+                res.end();
             }
         });
         Logger.log("WebServer", "Started webserver");
