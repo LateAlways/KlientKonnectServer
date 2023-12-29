@@ -117,7 +117,7 @@ export class WebServer {
                     screen.position -= cut;
                 });
                 ws.messages.splice(0, cut);
-                res.end(Buffer.concat(buffers).toString());
+                res.end(Buffer.concat(buffers));
             }
         });
         Logger.log("WebServer", "Started webserver");
