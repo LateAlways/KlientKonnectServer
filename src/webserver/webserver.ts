@@ -76,7 +76,7 @@ export class WebServer {
             Screen.screens = Screen.screens.filter((screen) => { return screen.jobid != req.getHeader("i"); });
             res.end();
         });
-        this.app.get("/api/messages", (res, req) => {
+        this.app.get("/api/messages", async (res, req) => {
             if(req.getHeader("i") == "" || req.getHeader("s") == "") {
                 res.writeStatus("400"); res.write(""); res.end();
                 return;
@@ -98,12 +98,10 @@ export class WebServer {
             res.writeHeader("Content-Type", "application/octet-stream");
 
             if(req.getHeader("s") === "1") {
-                
-                Client.currSharer.requestFullImage().then((value) => {
-                    res.write(Buffer.from(value).toString());
-                    screen.position = ws.messages.length;
-                    res.end();
-                });
+                let fullimage = await Client.currSharer.requestFullImage()
+                res.write(Buffer.from(fullimage).toString());
+                screen.position = ws.messages.length;
+                res.end();
             } else {
                 let buffers = [];
 
