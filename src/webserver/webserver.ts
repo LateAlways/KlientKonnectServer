@@ -1,31 +1,30 @@
-import * as express from 'express';
-import { Express } from 'express';
+import * as uws from "uWebSockets.js";
 import { Logger } from '../logger';
+import * as ws from '../websocket/ws';
 import { Client } from '../websocket/client';
 import { Configuration } from '../config';
 import { Screen } from './screen';
-import * as ws from '../websocket/ws';
 import { EventEmitter } from 'events';
 
 export const Emitter = new EventEmitter();
 Emitter.setMaxListeners(5000000);
 
 export class WebServer {
-    app: Express;
+    app: uws.TemplatedApp;
 
-    constructor(app: Express) {
+    constructor(app: uws.TemplatedApp) {
         this.app = app;
     }
 
     setup() {
-        this.app.get("/", (req, res) => {
-            res.send("KlientKonnect is running!");
+        this.app.get("/", (res, req) => {
+            res.write("KlientKonnect is running!");
+            res.end();
         });
-        this.app.get("/api/sharer", (req, res) => {
-            let sent = false;
+        this.app.get("/api/sharer", (res, req) => {
             function l() {
-                sent = true;
-                res.send(JSON.stringify({ name: Client.currSharer.name, id: Client.currSharer.socketid }));
+                res.write(JSON.stringify({ name: Client.currSharer.name, id: Client.currSharer.socketid }));
+                res.end();
             }
             if(Client.currSharer == null) {
                 Emitter.once("sharer", l);
@@ -34,73 +33,76 @@ export class WebServer {
                 l();
             }
         });
-        this.app.get("/api/connect", (req, res) => {
-            if(req.headers["p"] == undefined) { res.status(400); res.end(); return; }
-            if(req.headers["p"] !== Configuration.password) {
-                res.status(401);
-                res.end();
+        this.app.get("/api/connect", (res, req) => {
+            if(req.getHeader("p") == "") { res.writeStatus("400"); res.endWithoutBody(); return; }
+            if(req.getHeader("p") !== Configuration.password) {
+                res.writeStatus("401");
+                res.endWithoutBody();
             } else {
-                res.send("");
+                res.endWithoutBody();
             }
         });
-        this.app.get("/api/resolution", (req, res) => {
-            res.send(JSON.stringify({ width: Configuration.resolution.x, height: Configuration.resolution.y }));
+        this.app.get("/api/resolution", (res, req) => {
+            res.write(JSON.stringify({ width: Configuration.resolution.x, height: Configuration.resolution.y }));
+            res.end();
         });
-        this.app.get("/api/mode", (req, res) => {
-            res.send(JSON.stringify({ mode: Configuration.mode }));
+        this.app.get("/api/mode", (res, req) => {
+            res.write(JSON.stringify({ mode: Configuration.mode }));
+            res.end();
         });
-        this.app.get("/api/screen/register", (req, res) => {
-            if(req.headers["i"] == undefined || req.headers["p"] == undefined) { res.status(400); res.end(); return; }
-            if(req.headers["p"] !== Configuration.password) {
-                res.status(401);
-                res.end();
+        this.app.get("/api/screen/register", (res, req) => {
+            if(req.getHeader("i") == "" || req.getHeader("p") == "") { res.writeStatus("400"); res.endWithoutBody(); return; }
+            if(req.getHeader("p") !== Configuration.password) {
+                res.writeStatus("401");
+                res.endWithoutBody();
                 return;
             }
-            if(Screen.getScreenByJobid(req.headers["i"] as string) == null) {
-                Screen.screens.push(new Screen(req.headers["i"] as string));
+            if(Screen.getScreenByJobid(req.getHeader("i") as string) == null) {
+                Screen.screens.push(new Screen(req.getHeader("i") as string));
             }
             Logger.log("WebServer", "Screen registered");
-            res.send("");
+            res.endWithoutBody();
         });
-        this.app.get("/api/screen/unregister", (req, res) => {
-            if(req.headers["i"] == undefined) {
-                res.status(400); res.end();
+        this.app.get("/api/screen/unregister", (res, req) => {
+            if(req.getHeader("i") == "") {
+                res.writeStatus("400"); res.endWithoutBody();
                 return;
             }
-            if(Screen.getScreenByJobid(req.headers["i"] as string) == null) {
-                res.status(403); res.end();
+            if(Screen.getScreenByJobid(req.getHeader("i") as string) == null) {
+                res.writeStatus("403"); res.endWithoutBody();
                 return;
             }
             Logger.log("WebServer", "Screen unregistered");
-            Screen.screens = Screen.screens.filter((screen) => { return screen.jobid != req.headers["i"]; });
-            res.send("");
+            Screen.screens = Screen.screens.filter((screen) => { return screen.jobid != req.getHeader("i"); });
+            res.endWithoutBody();
         });
-        this.app.get("/api/messages", (req, res) => {
-            if(req.headers["i"] == undefined || req.headers["s"] == undefined) {
-                res.status(400); res.end();
+        this.app.get("/api/messages", (res, req) => {
+            if(req.getHeader("i") == "" || req.getHeader("s") == "") {
+                res.writeStatus("400"); res.endWithoutBody();
                 return;
             }
-            if(Screen.getScreenByJobid(req.headers["i"] as string) == null) {
-                res.status(403); res.end();
+            if(Screen.getScreenByJobid(req.getHeader("i") as string) == null) {
+                res.writeStatus("403"); res.endWithoutBody();
                 return;
             }
             
             if(Client.currSharer == null) {
-                res.setHeader("sharing", "{\"name\": null, \"id\": null}");
-                res.send("");
+                res.writeHeader("sharing", "{\"name\": null, \"id\": null}");
+                res.endWithoutBody();
                 return;
             } else
-                res.setHeader("sharing", JSON.stringify({ name: Client.currSharer.name, id: Client.currSharer.socketid }));
+                res.writeHeader("sharing", JSON.stringify({ name: Client.currSharer.name, id: Client.currSharer.socketid }));
             
-            let screen = Screen.getScreenByJobid(req.headers["i"] as string)
+            let screen = Screen.getScreenByJobid(req.getHeader("i") as string)
 
-            res.setHeader("Content-Type", "application/octet-stream");
+            res.writeHeader("Content-Type", "application/octet-stream");
 
-            if(req.headers["s"] === "1") {
+            if(req.getHeader("s") === "1") {
                 Client.currSharer.requestFullImage().then((value) => {
-                    res.send(Buffer.from(value));
+                    res.write(Buffer.from(value));
                 });
                 screen.position = ws.messages.length;
+                res.end();
                 return;
             } else {
                 let buffers = [];
@@ -110,7 +112,7 @@ export class WebServer {
                     screen.position++;
                 });
     
-                res.send(Buffer.concat(buffers));
+                res.write(Buffer.concat(buffers));
     
                 let cut = Screen.getLowestPosition();
                 Screen.screens.forEach((screen) => {

@@ -1,12 +1,12 @@
-import * as ws from 'ws';
 import { Configuration } from '../config';
+import * as uws from "uWebSockets.js";
 import { Logger } from '../logger';
 import { messages } from './ws';
 import * as webserver from '../webserver/webserver';
 
 
 export class Client {
-    socket: ws.Socket;
+    socket: uws.WebSocket<unknown>;
     socketid: number;
     authenticated: boolean;
     blocked: boolean;
@@ -16,15 +16,13 @@ export class Client {
     static currSharer: Client | null = null;
     waitingForImage: ((value: Buffer) => void)[] = [];
 
-    constructor(socket: ws.Socket, socketid: number) {
+    constructor(socket: uws.WebSocket<unknown>, socketid: number) {
         this.socket = socket;
         this.socketid = socketid;
         this.name = "";
         this.authenticated = false;
         this.blocked = false;
         this.subscribed = false;
-        socket.on("message", this.onMessage.bind(this));
-        socket.on("close", this.onClose.bind(this));
     }
 
     async requestFullImage() {
@@ -45,7 +43,7 @@ export class Client {
         }
     }
 
-    onMessage(message: ws.Data) {
+    onMessage(message: Buffer) {
         if(this.blocked) return;
         if(!this.authenticated && message.toString() == Configuration.password) {
             this.authenticated = true;
@@ -102,8 +100,8 @@ export class Client {
         webserver.Emitter.emit("data");
     }
 
-    send(data: ws.Data) {
-        this.socket.send(data);
+    send(data: any) {
+        this.socket.send(Buffer.from(data).toString());
     }
 
     close() {

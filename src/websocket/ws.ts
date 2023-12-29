@@ -1,4 +1,4 @@
-import * as ws from "ws";
+import * as uws from "uWebSockets.js";
 import * as http from "http";
 import * as https from "https";
 import { Logger } from "../logger";
@@ -7,26 +7,31 @@ import { Client } from "./client";
 export let messages: Buffer[] = [];
 
 export class WebSocketServer {
-    wsserver: ws.Server;
-    server: http.Server | https.Server;
+    wsserver: uws.TemplatedApp;
     
-    constructor(server: http.Server | https.Server) {
-        this.server = server;
-        this.wsserver = new ws.Server({ noServer: true });
-        this.wsserver.binaryType = 'arraybuffer';
+    constructor(server: uws.TemplatedApp) {
+        this.wsserver = server
+        this.wsserver.ws("/*", {
+            compression: uws.SHARED_COMPRESSOR,
+            maxPayloadLength: 16 * 1024 * 1024,
+            idleTimeout: 10,
+            open: (ws: uws.WebSocket<unknown>) => {
+                this.onConnection(ws);
+            },
+            message: (ws: uws.WebSocket<unknown>, message: ArrayBuffer, isBinary: boolean) => {
+                Client.clients.find((client) => { return client.socket === ws; })?.onMessage(Buffer.from(message));
+            },
+            close(ws, code, message) {
+                Client.clients.find((client) => { return client.socket === ws; })?.onClose();
+            },
+        });
     }
 
     start() {
-        this.server.on("upgrade", (request, socket, head) => {
-            this.wsserver.handleUpgrade(request, socket, head, (socket) => {
-                this.wsserver.emit("connection", socket, request);
-            });
-        });
-        this.wsserver.on("connection", this.onConnection.bind(this));
         Logger.log("WebSocketServer", "Started WebSocket server");
     }
 
-    onConnection(socket: ws, request: http.IncomingMessage) {
-        Client.clients.push(new Client(socket, Client.clients.length));
+    onConnection(ws: uws.WebSocket<unknown>) {
+        Client.clients.push(new Client(ws, Client.clients.length));
     }
 }
