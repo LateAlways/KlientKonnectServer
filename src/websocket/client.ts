@@ -87,7 +87,7 @@ export class Client {
         }
         if(message.toString().startsWith("reqfullimage") && Client.currSharer == this) {
             this.waitingForImage.forEach((resolve) => {
-                resolve(Buffer.from(message.toString().split(":")[1]));
+                resolve(Buffer.from(message.toString().substring(12)));
             });
             return;
         }

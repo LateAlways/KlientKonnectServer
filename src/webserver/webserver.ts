@@ -34,12 +34,12 @@ export class WebServer {
             }
         });
         this.app.get("/api/connect", (res, req) => {
-            if(req.getHeader("p") == "") { res.writeStatus("400"); res.endWithoutBody(); return; }
+            if(req.getHeader("p") == "") { res.writeStatus("400"); res.end(); return; }
             if(req.getHeader("p") !== Configuration.password) {
                 res.writeStatus("401");
-                res.endWithoutBody();
+                res.end();
             } else {
-                res.endWithoutBody();
+                res.end();
             }
         });
         this.app.get("/api/resolution", (res, req) => {
@@ -51,30 +51,30 @@ export class WebServer {
             res.end();
         });
         this.app.get("/api/screen/register", (res, req) => {
-            if(req.getHeader("i") == "" || req.getHeader("p") == "") { res.writeStatus("400"); res.endWithoutBody(); return; }
+            if(req.getHeader("i") == "" || req.getHeader("p") == "") { res.writeStatus("400"); res.end(); return; }
             if(req.getHeader("p") !== Configuration.password) {
                 res.writeStatus("401");
-                res.endWithoutBody();
+                res.end();
                 return;
             }
             if(Screen.getScreenByJobid(req.getHeader("i") as string) == null) {
                 Screen.screens.push(new Screen(req.getHeader("i") as string));
             }
             Logger.log("WebServer", "Screen registered");
-            res.endWithoutBody();
+            res.end();
         });
         this.app.get("/api/screen/unregister", (res, req) => {
             if(req.getHeader("i") == "") {
-                res.writeStatus("400"); res.endWithoutBody();
+                res.writeStatus("400"); res.end();
                 return;
             }
             if(Screen.getScreenByJobid(req.getHeader("i") as string) == null) {
-                res.writeStatus("403"); res.endWithoutBody();
+                res.writeStatus("403"); res.end();
                 return;
             }
             Logger.log("WebServer", "Screen unregistered");
             Screen.screens = Screen.screens.filter((screen) => { return screen.jobid != req.getHeader("i"); });
-            res.endWithoutBody();
+            res.end();
         });
         this.app.get("/api/messages", (res, req) => {
             if(req.getHeader("i") == "" || req.getHeader("s") == "") {
