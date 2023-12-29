@@ -1,6 +1,6 @@
 export const Configuration = {
     port: 8443,
-    ssl: true,
+    ssl: false,
     sslKeyLoc: "/home/latealways/ssl-certs/private.key",
     sslCertLoc: "/home/latealways/ssl-certs/certificate.cert",
 
@@ -9,5 +9,5 @@ export const Configuration = {
     maxMessageSend: 9999,
     longPollTimeout: 30,
 
-    password: "wethebestmusic!lifeisroblox"
+    password: "devserv"
 }

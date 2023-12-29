@@ -106,6 +106,7 @@ export class Client {
     }
 
     close() {
+        console.log("closing connection")
         this.socket.close();
     }
 }

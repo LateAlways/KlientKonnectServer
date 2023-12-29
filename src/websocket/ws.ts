@@ -12,7 +12,9 @@ export class WebSocketServer {
     constructor(server: uws.TemplatedApp) {
         this.wsserver = server
         this.wsserver.ws("/*", {
-            compression: 0,
+            compression: uws.DISABLED,
+            maxPayloadLength: -1,
+            maxLifetime: 0,
             open: (ws: uws.WebSocket<unknown>) => {
                 this.onConnection(ws);
             },
@@ -20,6 +22,7 @@ export class WebSocketServer {
                 Client.clients.find((client) => { return client.socket === ws; })?.onMessage(message);
             },
             close(ws: uws.WebSocket<unknown>, code: number, message: ArrayBuffer) {
+                console.log(code, Buffer.from(new Uint8Array(message)).toString());
                 Client.clients.find((client) => { return client.socket === ws; })?.onClose();
             },
         });
