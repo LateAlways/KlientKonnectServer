@@ -14,7 +14,7 @@ export class Client {
     subscribed: boolean;
     static clients: Client[] = [];
     static currSharer: Client | null = null;
-    waitingForImage: ((value: string) => void)[] = [];
+    waitingForImage: ((value: ArrayBuffer) => void)[] = [];
 
     constructor(socket: uws.WebSocket<unknown>, socketid: number) {
         this.socket = socket;
@@ -29,7 +29,7 @@ export class Client {
         this.send("reqfullimage");
         Logger.log("ClientRequest", "Requested full image from "+this.name+" ("+this.socketid.toString()+")");
 
-        return await new Promise<string>((resolve) => {
+        return await new Promise<ArrayBuffer>((resolve) => {
             this.waitingForImage.push(resolve);
         });
     }
@@ -43,9 +43,10 @@ export class Client {
         }
     }
 
-    onMessage(message: Buffer) {
+    onMessage(message: ArrayBuffer) {
+        const msgBuffer = Buffer.from(message);
         if(this.blocked) return;
-        if(!this.authenticated && message.toString() == Configuration.password) {
+        if(!this.authenticated && msgBuffer.toString() == Configuration.password) {
             this.authenticated = true;
             this.send("authenticated");
             Logger.log("ClientAuth", "Authenticated client");
@@ -59,35 +60,35 @@ export class Client {
             this.close();
             return;
         }
-        if(message.toString().startsWith("connect:") && Client.currSharer == null) {
-            this.name = message.toString().split(":")[1];
+        if(msgBuffer.toString().startsWith("connect:") && Client.currSharer == null) {
+            this.name = msgBuffer.toString().split(":")[1];
             Client.currSharer = this;
             this.send("connectsuccess");
             Logger.log("ClientConnect", this.name+" ("+this.socketid.toString()+") is now sharing their screen.");
             webserver.Emitter.emit("sharer");
             return;
-        } else if(message.toString().startsWith("connect:")) {
+        } else if(msgBuffer.toString().startsWith("connect:")) {
             this.send("connectfailure:already");
             return;
         }
-        if(message.toString() === "disconnect" && Client.currSharer == this) {
+        if(msgBuffer.toString() === "disconnect" && Client.currSharer == this) {
             Client.currSharer = null;
             Logger.log("ClientConnect", this.name+" ("+this.socketid.toString()+") stopped sharing their screen.");
             return;
         }
-        if(message.toString() === "subscribe") {
+        if(msgBuffer.toString() === "subscribe") {
             this.subscribed = true;
             Logger.log("ClientSubscribe", this.name+" ("+this.socketid.toString()+") subscribed to the stream.");
             return;
         }
-        if(message.toString() === "unsubscribe") {
+        if(msgBuffer.toString() === "unsubscribe") {
             this.subscribed = false;
             Logger.log("ClientSubscribe", this.name+" ("+this.socketid.toString()+") unsubscribed from the stream.");
             return;
         }
-        if(message.toString().startsWith("reqfullimage") && Client.currSharer == this) {
+        if(msgBuffer.toString().startsWith("reqfullimage") && Client.currSharer == this) {
             this.waitingForImage.forEach((resolve) => {
-                resolve(Buffer.from(message.toString().substring(12)).toString());
+                resolve(message.slice(12));
             });
             return;
         }
@@ -96,12 +97,12 @@ export class Client {
                 client.send(message);
             }
         });
-        messages.push(message.toString());
+        messages.push(message);
         webserver.Emitter.emit("data");
     }
 
     send(data: any) {
-        this.socket.send(Buffer.from(data).toString());
+        this.socket.send(Buffer.from(data));
     }
 
     close() {

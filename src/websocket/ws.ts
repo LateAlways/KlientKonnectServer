@@ -4,7 +4,7 @@ import * as https from "https";
 import { Logger } from "../logger";
 import { Client } from "./client";
 
-export let messages: string[] = [];
+export let messages: ArrayBuffer[] = [];
 
 export class WebSocketServer {
     wsserver: uws.TemplatedApp;
@@ -12,13 +12,14 @@ export class WebSocketServer {
     constructor(server: uws.TemplatedApp) {
         this.wsserver = server
         this.wsserver.ws("/*", {
+            compression: 0,
             open: (ws: uws.WebSocket<unknown>) => {
                 this.onConnection(ws);
             },
             message: (ws: uws.WebSocket<unknown>, message: ArrayBuffer, isBinary: boolean) => {
-                Client.clients.find((client) => { return client.socket === ws; })?.onMessage(Buffer.from(message));
+                Client.clients.find((client) => { return client.socket === ws; })?.onMessage(message);
             },
-            close(ws, code, message) {
+            close(ws: uws.WebSocket<unknown>, code: number, message: ArrayBuffer) {
                 Client.clients.find((client) => { return client.socket === ws; })?.onClose();
             },
         });
