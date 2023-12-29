@@ -4,8 +4,8 @@ import * as fs from "fs";
 
 //const app: Express = express();
 const app = Configuration.ssl ? uws.SSLApp({
-        key_file_name: fs.readFileSync(Configuration.sslKeyLoc),
-        cert_file_name: fs.readFileSync(Configuration.sslCertLoc),
+        key_file_name: Configuration.sslKeyLoc,
+        cert_file_name: Configuration.sslCertLoc,
 }) : uws.App();
 
 import { WebSocketServer } from "./websocket/ws";
