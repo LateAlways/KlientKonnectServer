@@ -105,15 +105,12 @@ export class WebServer {
                     res.end();
                 });
             } else {
-                console.log("k")
                 let buffers = [];
 
                 ws.messages.slice(screen.position,screen.position+Configuration.maxMessageSend).forEach((message) => {
                     buffers.push(Buffer.from(message));
                     screen.position++;
                 });
-
-                console.log(ws.messages.length, screen.position)
     
                 let cut = Screen.getLowestPosition();
                 Screen.screens.forEach((screen) => {
