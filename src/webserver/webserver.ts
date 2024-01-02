@@ -5,9 +5,20 @@ import { Client } from '../websocket/client';
 import { Configuration } from '../config';
 import { Screen } from './screen';
 import { EventEmitter } from 'events';
+import * as io from "@pm2/io";
 
 export const Emitter = new EventEmitter();
 Emitter.setMaxListeners(5000000);
+
+const ImagesStuck = io.metric({
+    name: "Images cached",
+    id: "images_stuck",
+});
+
+const ScreensRegistered = io.metric({
+    name: "Screens registered",
+    id: "screens_registered",
+});
 
 export class WebServer {
     app: uws.TemplatedApp;
@@ -61,6 +72,7 @@ export class WebServer {
                 Screen.screens.push(new Screen(req.getHeader("i") as string));
             }
             Logger.log("WebServer", "Screen registered");
+            ScreensRegistered.set(Screen.screens.length);
             res.end();
         });
         this.app.get("/api/screen/unregister", (res, req) => {
@@ -74,6 +86,7 @@ export class WebServer {
             }
             Logger.log("WebServer", "Screen unregistered");
             Screen.screens = Screen.screens.filter((screen) => { return screen.jobid != req.getHeader("i"); });
+            ScreensRegistered.set(Screen.screens.length);
             res.end();
         });
         this.app.get("/api/messages", (res, req) => {
@@ -100,9 +113,8 @@ export class WebServer {
             if(req.getHeader("s") === "1") {
                 res.onAborted(() => {});
                 Client.currSharer.requestFullImage().then(image => {
-                    res.write(image);
                     screen.position = ws.messages.length;
-                    res.end();
+                    res.end(image);
                 });
             } else {
                 let buffers = [];
@@ -117,6 +129,7 @@ export class WebServer {
                     screen.position -= cut;
                 });
                 ws.messages.splice(0, cut);
+                ImagesStuck.set(ws.messages.length);
                 res.end(Buffer.concat(buffers));
             }
         });
