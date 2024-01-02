@@ -98,6 +98,7 @@ export class Client {
             }
         });
         messages.push(Buffer.from(new Uint8Array(message)));
+        webserver.ImagesStuck.set(messages.length);
         webserver.Emitter.emit("data");
     }
 

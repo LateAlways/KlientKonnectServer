@@ -5,9 +5,9 @@ export const Configuration = {
     sslCertLoc: "/home/latealways/ssl-certs/certificate.cert",
 
     mode: "editable",
-    resolution: {x: 160, y: 90},
-    maxMessageSend: 9999,
-    longPollTimeout: 30,
+    resolution: {x: 160, y: 90}, // Screenshare resolution
+    maxMessageSend: -1, // -1 = disabled
+    longPoll: true,
 
-    password: "wethebestmusic!lifeisroblox"
+    password: "wethebestmusic!lifeisroblox" // Screenshare app password
 }

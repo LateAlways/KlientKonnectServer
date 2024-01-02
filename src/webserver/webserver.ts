@@ -5,7 +5,7 @@ import { Client } from '../websocket/client';
 import { Configuration } from '../config';
 import { Screen } from './screen';
 import { EventEmitter } from 'events';
-const io = require('@pm2/io')
+import io from '@pm2/io';
 
 export const Emitter = new EventEmitter();
 Emitter.setMaxListeners(5000000);
@@ -15,15 +15,20 @@ transactions: true, // will enable the transaction tracing
 http: true // will enable metrics about the http server (optional)
 })
 
-const ImagesStuck = io.metric({
+export const ImagesStuck = io.metric({
     name: "Images cached",
     id: "images_stuck",
 });
+ImagesStuck.set(0);
 
-const ScreensRegistered = io.metric({
+export const ScreensRegistered = io.metric({
     name: "Screens registered",
     id: "screens_registered",
 });
+
+ScreensRegistered.set(0);
+
+const KlientKonnectIsRunning: uws.RecognizedString = new Uint8Array([0x4b, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x4b, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x20, 0x69, 0x73, 0x20, 0x72, 0x75, 0x6e, 0x6e, 0x69, 0x6e, 0x67, 0x21])
 
 export class WebServer {
     app: uws.TemplatedApp;
@@ -34,13 +39,11 @@ export class WebServer {
 
     setup() {
         this.app.get("/", (res, req) => {
-            res.write("KlientKonnect is running!");
-            res.end();
+            res.end(KlientKonnectIsRunning);
         });
         this.app.get("/api/sharer", (res, req) => {
             function l() {
-                res.write(JSON.stringify({ name: Client.currSharer.name, id: Client.currSharer.socketid }));
-                res.end();
+                res.end(JSON.stringify({ name: Client.currSharer.name, id: Client.currSharer.socketid }));
             }
             if(Client.currSharer == null) {
                 Emitter.once("sharer", l);
@@ -59,12 +62,10 @@ export class WebServer {
             }
         });
         this.app.get("/api/resolution", (res, req) => {
-            res.write(JSON.stringify({ width: Configuration.resolution.x, height: Configuration.resolution.y }));
-            res.end();
+            res.end(JSON.stringify({ width: Configuration.resolution.x, height: Configuration.resolution.y }));
         });
         this.app.get("/api/mode", (res, req) => {
-            res.write(JSON.stringify({ mode: Configuration.mode }));
-            res.end();
+            res.end(JSON.stringify({ mode: Configuration.mode }));
         });
         this.app.get("/api/screen/register", (res, req) => {
             if(req.getHeader("i") == "" || req.getHeader("p") == "") { res.writeStatus("400"); res.end(); return; }
@@ -104,11 +105,9 @@ export class WebServer {
                 return;
             }
             
-            if(Client.currSharer == null) {
+            if(Client.currSharer == null)
                 res.writeHeader("sharing", "{\"name\": null, \"id\": null}");
-                res.write(""); res.end();
-                return;
-            } else
+            else
                 res.writeHeader("sharing", JSON.stringify({ name: Client.currSharer.name, id: Client.currSharer.socketid }));
             
             let screen = Screen.getScreenByJobid(req.getHeader("i") as string)
@@ -122,20 +121,23 @@ export class WebServer {
                     res.end(image);
                 });
             } else {
-                let buffers = [];
-
-                ws.messages.slice(screen.position,screen.position+Configuration.maxMessageSend).forEach((message) => {
-                    buffers.push(message);
-                    screen.position++;
-                });
+                function l() {
+                    let buffers = [];
     
-                let cut = Screen.getLowestPosition();
-                Screen.screens.forEach((screen) => {
-                    screen.position -= cut;
-                });
-                ws.messages.splice(0, cut);
-                ImagesStuck.set(ws.messages.length);
-                res.end(Buffer.concat(buffers));
+                    (Configuration.maxMessageSend === -1 ? ws.messages : ws.messages.slice(screen.position,screen.position+Configuration.maxMessageSend)).forEach((message) => {
+                        buffers.push(message);
+                        screen.position++;
+                    });
+        
+                    let cut = Screen.getLowestPosition();
+                    Screen.screens.forEach((screen) => {
+                        screen.position -= cut;
+                    });
+                    ws.messages.splice(0, cut);
+                    ImagesStuck.set(ws.messages.length);
+                    res.end(Buffer.concat(buffers));
+                }
+                Emitter.once("data", l);
             }
         });
         Logger.log("WebServer", "Started webserver");
