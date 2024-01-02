@@ -10,6 +10,11 @@ const io = require('@pm2/io')
 export const Emitter = new EventEmitter();
 Emitter.setMaxListeners(5000000);
 
+io.init({
+transactions: true, // will enable the transaction tracing
+http: true // will enable metrics about the http server (optional)
+})
+
 const ImagesStuck = io.metric({
     name: "Images cached",
     id: "images_stuck",
