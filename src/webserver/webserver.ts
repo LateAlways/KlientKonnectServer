@@ -5,7 +5,7 @@ import { Client } from '../websocket/client';
 import { Configuration } from '../config';
 import { Screen } from './screen';
 import { EventEmitter } from 'events';
-import * as io from "@pm2/io";
+const io = require('@pm2/io')
 
 export const Emitter = new EventEmitter();
 Emitter.setMaxListeners(5000000);
