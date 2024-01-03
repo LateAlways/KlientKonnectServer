@@ -66,6 +66,11 @@ export class Client {
             this.send("connectsuccess");
             Logger.log("ClientConnect", this.name+" ("+this.socketid.toString()+") is now sharing their screen.");
             webserver.Emitter.emit("sharer");
+            Client.clients.forEach((client) => {
+                if(client.authenticated && client.subscribed && client.socketid != this.socketid) {
+                    client.send(msgBuffer.toString());
+                }
+            });
             return;
         } else if(msgBuffer.toString().startsWith("connect:")) {
             this.send("connectfailure:already");
@@ -74,6 +79,11 @@ export class Client {
         if(msgBuffer.toString() === "disconnect" && Client.currSharer == this) {
             Client.currSharer = null;
             Logger.log("ClientConnect", this.name+" ("+this.socketid.toString()+") stopped sharing their screen.");
+            Client.clients.forEach((client) => {
+                if(client.authenticated && client.subscribed && client.socketid != this.socketid) {
+                    client.send(msgBuffer.toString());
+                }
+            });
             return;
         }
         if(msgBuffer.toString() === "subscribe") {
