@@ -1,6 +1,6 @@
 export const Configuration = {
     port: 8443,
-    ssl: false,
+    ssl: true,
     sslKeyLoc: "/home/latealways/ssl-certs/private.key",
     sslCertLoc: "/home/latealways/ssl-certs/certificate.cert",
 
