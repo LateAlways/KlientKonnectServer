@@ -3,7 +3,7 @@ import { Logger } from '../logger';
 import * as ws from '../websocket/ws';
 import { Client } from '../websocket/client';
 import { Configuration } from '../config';
-import { Screen } from './screen';
+
 import { EventEmitter } from 'events';
 import io from '@pm2/io';
 
@@ -124,11 +124,6 @@ export class WebServer {
                         screen.position++;
                     });
         
-                    let cut = Screen.getLowestPosition();
-                    Screen.screens.forEach((screen) => {
-                        screen.position -= cut;
-                    });
-                    ws.messages.splice(0, cut);
                     ImagesStuck.set(ws.messages.length);
                     res.end(Buffer.concat(buffers));
                 }

@@ -3,7 +3,7 @@ import * as uws from "uWebSockets.js";
 import { Logger } from '../logger';
 import { messages } from './ws';
 import * as webserver from '../webserver/webserver';
-
+import { Screen } from '../webserver/screen';
 
 export class Client {
     socket: uws.WebSocket<unknown>;
@@ -107,7 +107,13 @@ export class Client {
                 client.send(new Uint8Array(message), true);
             }
         });
+        
         messages.push(Buffer.from(new Uint8Array(message)));
+        let cut = Screen.getLowestPosition();
+        Screen.screens.forEach((screen) => {
+            screen.position -= cut;
+        });
+        messages.splice(0, cut);
         webserver.ImagesStuck.set(messages.length);
         webserver.Emitter.emit("data");
     }

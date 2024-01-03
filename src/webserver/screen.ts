@@ -1,3 +1,5 @@
+import { messages } from "../websocket/ws";
+
 export class Screen {
     static screens: Screen[] = [];
     jobid: string;
@@ -5,6 +7,7 @@ export class Screen {
 
     static getLowestPosition(): number {
         let lowest = 0;
+        if(Screen.screens.length == 0) return messages.length;
         Screen.screens.forEach((screen) => {
             if(screen.position > lowest) lowest = screen.position;
         });
