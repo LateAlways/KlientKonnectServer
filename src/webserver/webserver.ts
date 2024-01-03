@@ -109,7 +109,7 @@ export class WebServer {
 
             res.writeHeader("Content-Type", "application/octet-stream");
 
-            if(req.getHeader("s") === "1") {
+            if(req.getHeader("s") === "1" && Client.currSharer !== null) {
                 res.onAborted(() => {});
                 Client.currSharer.requestFullImage().then(image => {
                     screen.position = ws.messages.length;
