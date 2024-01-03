@@ -2,7 +2,7 @@ import * as uws from "uWebSockets.js";
 import * as http from "http";
 import * as https from "https";
 import { Logger } from "../logger";
-import { Client } from "./client";
+import { Client, clients } from "./client";
 
 export let messages: Buffer[] = [];
 
@@ -19,11 +19,11 @@ export class WebSocketServer {
                 this.onConnection(ws);
             },
             message: (ws: uws.WebSocket<unknown>, message: ArrayBuffer, isBinary: boolean) => {
-                Client.clients.find((client) => { return client.socket === ws; })?.onMessage(message);
+                clients.find((client) => { return client.socket === ws; })?.onMessage(message);
             },
             close(ws: uws.WebSocket<unknown>, code: number, message: ArrayBuffer) {
                 console.log(code, Buffer.from(new Uint8Array(message)).toString());
-                Client.clients.find((client) => { return client.socket === ws; })?.onClose();
+                clients.find((client) => { return client.socket === ws; })?.onClose();
             },
         });
     }
@@ -33,6 +33,6 @@ export class WebSocketServer {
     }
 
     onConnection(ws: uws.WebSocket<unknown>) {
-        Client.clients.push(new Client(ws, Client.clients.length));
+        clients.push(new Client(ws, clients.length));
     }
 }

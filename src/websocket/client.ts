@@ -5,6 +5,8 @@ import { messages } from './ws';
 import * as webserver from '../webserver/webserver';
 import { Screen } from '../webserver/screen';
 
+export let clients: Client[] = [];
+
 export class Client {
     socket: uws.WebSocket<unknown>;
     socketid: number;
@@ -12,7 +14,6 @@ export class Client {
     blocked: boolean;
     name: string;
     subscribed: boolean;
-    static clients: Client[] = [];
     static currSharer: Client | null = null;
     waitingForImage: ((value: ArrayBuffer) => void)[] = [];
 
@@ -35,7 +36,7 @@ export class Client {
     }
 
     onClose() {
-        Client.clients = Client.clients.filter((client) => { return client.socketid != this.socketid; });
+        clients = clients.filter((client) => { return client.socketid != this.socketid; });
 
         if(Client.currSharer == this) {
             Client.currSharer = null;
@@ -66,7 +67,7 @@ export class Client {
             this.send("connectsuccess");
             Logger.log("ClientConnect", this.name+" ("+this.socketid.toString()+") is now sharing their screen.");
             webserver.Emitter.emit("sharer");
-            Client.clients.forEach((client) => {
+            clients.forEach((client) => {
                 if(client.authenticated && client.subscribed && client.socketid != this.socketid) {
                     client.send(msgBuffer.toString());
                 }
@@ -79,7 +80,7 @@ export class Client {
         if(msgBuffer.toString() === "disconnect" && Client.currSharer == this) {
             Client.currSharer = null;
             Logger.log("ClientConnect", this.name+" ("+this.socketid.toString()+") stopped sharing their screen.");
-            Client.clients.forEach((client) => {
+            clients.forEach((client) => {
                 if(client.authenticated && client.subscribed && client.socketid != this.socketid) {
                     client.send(msgBuffer.toString());
                 }
@@ -102,7 +103,7 @@ export class Client {
             });
             return;
         }
-        Client.clients.forEach((client) => {
+        clients.forEach((client) => {
             if(client.authenticated && client.subscribed && client.socketid != this.socketid) {
                 client.send(new Uint8Array(message), true);
             }
