@@ -134,7 +134,7 @@ export class WebServer {
                 Emitter.once("data", l);
                 setTimeout(() => {
                     Emitter.removeListener("data", l);
-                }, 1*60*1000)
+                }, 0.5*60*1000)
             }
         });
         Logger.log("WebServer", "Started webserver");

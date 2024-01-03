@@ -7,6 +7,7 @@ export class Screen {
 
     static getLowestPosition(): number {
         let lowest = 0;
+        console.log(Screen.screens.length)
         if(Screen.screens.length == 0) return messages.length;
         Screen.screens.forEach((screen) => {
             if(screen.position > lowest) lowest = screen.position;
