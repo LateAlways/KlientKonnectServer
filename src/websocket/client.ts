@@ -94,7 +94,7 @@ export class Client {
         }
         Client.clients.forEach((client) => {
             if(client.authenticated && client.subscribed && client.socketid != this.socketid) {
-                client.send(Buffer.from(new Uint8Array(message)));
+                client.send(new Uint8Array(message));
             }
         });
         messages.push(Buffer.from(new Uint8Array(message)));
@@ -102,8 +102,8 @@ export class Client {
         webserver.Emitter.emit("data");
     }
 
-    send(data: any) {
-        this.socket.send(Buffer.from(data));
+    send(data: uws.RecognizedString) {
+        this.socket.send(data, true);
     }
 
     close() {
