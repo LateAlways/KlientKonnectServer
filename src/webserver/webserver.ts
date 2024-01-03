@@ -116,6 +116,7 @@ export class WebServer {
                     res.end(image);
                 });
             } else {
+                res.onAborted(() => {});
                 function l() {
                     let buffers = [];
     
@@ -126,6 +127,9 @@ export class WebServer {
         
                     ImagesStuck.set(ws.messages.length);
                     res.end(Buffer.concat(buffers));
+                }
+                if(ws.messages.length > screen.position) {
+                    l();
                 }
                 Emitter.once("data", l);
             }
