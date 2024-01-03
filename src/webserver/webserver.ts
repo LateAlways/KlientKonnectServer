@@ -130,11 +130,12 @@ export class WebServer {
                 }
                 if(ws.messages.length > screen.position) {
                     l();
+                } else {
+                    Emitter.once("data", l);
+                    setTimeout(() => {
+                        Emitter.removeListener("data", l);
+                    }, 0.5*60*1000)
                 }
-                Emitter.once("data", l);
-                setTimeout(() => {
-                    Emitter.removeListener("data", l);
-                }, 0.5*60*1000)
             }
         });
         Logger.log("WebServer", "Started webserver");
