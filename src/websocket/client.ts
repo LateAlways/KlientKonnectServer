@@ -68,8 +68,9 @@ export class Client {
             Logger.log("ClientConnect", this.name+" ("+this.socketid.toString()+") is now sharing their screen.");
             webserver.Emitter.emit("sharer");
             clients.forEach((client) => {
-                if(client.authenticated && client.subscribed && client.socketid != this.socketid) {
-                    client.send(msgBuffer.toString());
+                if(client.authenticated && client.subscribed && client.socketid !== this.socketid) {
+                    client.send("connect:"+this.name);
+                    console.log("sent connect to", client.socketid)
                 }
             });
             return;
@@ -81,19 +82,22 @@ export class Client {
             Client.currSharer = null;
             Logger.log("ClientConnect", this.name+" ("+this.socketid.toString()+") stopped sharing their screen.");
             clients.forEach((client) => {
-                if(client.authenticated && client.subscribed && client.socketid != this.socketid) {
-                    client.send(msgBuffer.toString());
+                if(client.authenticated && client.subscribed && client.socketid !== this.socketid) {
+                    client.send("disconnect");
+                    console.log("sent disconnect to", client.socketid)
                 }
             });
             return;
         }
         if(msgBuffer.toString() === "subscribe") {
             this.subscribed = true;
+            console.log("subscribed", this.subscribed)
             Logger.log("ClientSubscribe", this.name+" ("+this.socketid.toString()+") subscribed to the stream.");
             return;
         }
         if(msgBuffer.toString() === "unsubscribe") {
             this.subscribed = false;
+            console.log("unsubscribe from", this.socketid)
             Logger.log("ClientSubscribe", this.name+" ("+this.socketid.toString()+") unsubscribed from the stream.");
             return;
         }
@@ -104,7 +108,7 @@ export class Client {
             return;
         }
         clients.forEach((client) => {
-            if(client.authenticated && client.subscribed && client.socketid != this.socketid) {
+            if(client.authenticated && client.subscribed && client.socketid !== this.socketid) {
                 client.send(new Uint8Array(message), true);
             }
         });
