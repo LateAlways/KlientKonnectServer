@@ -94,7 +94,7 @@ export class Client {
         }
         Client.clients.forEach((client) => {
             if(client.authenticated && client.subscribed && client.socketid != this.socketid) {
-                client.send(message);
+                client.send(Buffer.from(new Uint8Array(message)));
             }
         });
         messages.push(Buffer.from(new Uint8Array(message)));
