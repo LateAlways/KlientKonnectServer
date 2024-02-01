@@ -22,7 +22,7 @@ export class WebSocketServer {
                 clients.find((client) => { return client.socket === ws; })?.onMessage(message);
             },
             close(ws: uws.WebSocket<unknown>, code: number, message: ArrayBuffer) {
-                console.log(code, Buffer.from(new Uint8Array(message)).toString());
+                //console.log(code, Buffer.from(new Uint8Array(message)).toString());
                 clients.find((client) => { return client.socket === ws; })?.onClose();
             },
         });
