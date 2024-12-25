@@ -5,7 +5,7 @@ export const Configuration = {
     sslCertLoc: "/home/latealways/ssl-certs/certificate.crt",
 
     mode: "editable",
-    resolution: {x: 640, y: 360}, // Screenshare resolution
+    resolution: {x: 16*16, y: 9*16}, // Screenshare resolution
     maxMessageSend: -1, // -1 = disabled
     longPoll: true,
 

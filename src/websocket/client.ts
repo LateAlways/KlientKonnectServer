@@ -47,7 +47,8 @@ export class Client {
     onMessage(message: ArrayBuffer) {
         const msgBuffer = Buffer.from(message);
         if(this.blocked) return;
-        if(!this.authenticated && msgBuffer.toString() == Configuration.password) {
+        if(msgBuffer.toString() === "keepalive") return;
+	if(!this.authenticated && msgBuffer.toString() == Configuration.password) {
             this.authenticated = true;
             this.send("authenticated");
             Logger.log("ClientAuth", "Authenticated client");
