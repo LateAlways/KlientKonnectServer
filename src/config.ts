@@ -1,11 +1,11 @@
 export const Configuration = {
-    port: 8443,
-    ssl: true,
+    port: 2000,
+    ssl: false,
     sslKeyLoc: "/home/latealways/ssl-certs/private.key",
-    sslCertLoc: "/home/latealways/ssl-certs/certificate.cert",
+    sslCertLoc: "/home/latealways/ssl-certs/certificate.crt",
 
     mode: "editable",
-    resolution: {x: 160, y: 90}, // Screenshare resolution
+    resolution: {x: 640, y: 360}, // Screenshare resolution
     maxMessageSend: -1, // -1 = disabled
     longPoll: true,
 
